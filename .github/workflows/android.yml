@@ -1,12 +1,28 @@
-name: Build Android APK
+
+          name: Build Android APK
 on: [push, workflow_dispatch]
 jobs:
   build:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@v4
-      - name: Setup Buildozer
-        uses: ArtemGovorov/buildozer-action@v1
+      - name: Setup Python
+        uses: actions/setup-python@v5
         with:
-          command: buildozer -v android debug
+          python-version: '3.10'
+      - name: Install Buildozer dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y ccache git libffi-dev libssl-dev xclip libsdl2-dev libsdl2-image-dev libsdl2-mixer-dev libsdl2-ttf-dev lld openjdk-17-jdk unzip zip
+          pip install --upgrade Cython==0.29.33 buildozer
+      - name: Build with Buildozer
+        run: |
+          buildozer init
+          sed -i 's/^requirements = .*/requirements = python3,kivy/' buildozer.spec
+          buildozer -v android debug
+      - name: Upload APK
+        uses: actions/upload-artifact@v4
+        with:
+          name: CastTigerCalculator-APK
+          path: bin/*.apk
           
